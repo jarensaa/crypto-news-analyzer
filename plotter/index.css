@@ -1,0 +1,9 @@
+.image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+svg {
+  margin-top: 50px;
+}
