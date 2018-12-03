@@ -1,3 +1,4 @@
+<<<<<<< 8e06d876358fa36729a3d1fd74cfa49d2d5683a5
 .vscode
 
 .metadata
@@ -55,3 +56,6 @@ local.properties
 .cache-main
 .scala_dependencies
 .worksheet
+=======
+.vscode
+>>>>>>> initial version working on local mongodb
