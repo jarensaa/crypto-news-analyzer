@@ -6,16 +6,22 @@ import numpy as np
 import json
 import requests
 import pymongo
+import os 
 
 
-def configure_local_db():
+def configure_db():
     """ configure local mongodb instance 
     :return: collection to store data in 
     # TODO: structure mongodb collection and configuration
+    # TODO: set environment variables in server
     """
 
     try: 
-        client = pymongo.MongoClient() 
+        # adjust this in local and server environment
+        pw = os.environ.get('MONGOPW')
+        name = os.environ.get('MONGOUSER')
+        client = pymongo.MongoClient("mongodb+srv://{}:{}@cluster-kaw-loi4k.mongodb.net/test?retryWrites=true"\
+            .format(pw,name))
         print("Connected successfully.") 
     except:   
         print("Could not connect to MongoDB") 
@@ -44,7 +50,7 @@ def scrape_data(coins, ts_from, ts_to, granularity="histohour?"):
     """
 
     # TODO: change granularity by changing api string to query 
-    collection = configure_local_db()
+    collection = configure_db()
     timestamps = parse_time_frame(ts_from,ts_to)
 
     
@@ -72,6 +78,9 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     ts_from =  dt.datetime.strptime(ts_from, timeformat)
     time_period =  ts_to - ts_from
 
+    if time_period.days < 0: 
+        raise ValueError('Time Frame is {} days'.format(str(time_period.days)))
+    
     timestamps = []
     ts_current = ts_from
     num_calls = int(np.ceil(time_period.days/7)) 
@@ -85,4 +94,4 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     return timestamps
 
 # show example call 
-scrape_data(['BTC'],"1.04.2018","13.10.2018")
+scrape_data(['BTC'],"1.11.2018","1.10.2018")
