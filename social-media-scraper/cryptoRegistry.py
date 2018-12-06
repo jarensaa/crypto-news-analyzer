@@ -14,7 +14,7 @@ cryptocurrencies[BITCOIN] = {
     "subreddits": [
         {
             "subreddit": "CryptoCurrency",
-            "keywords": "bitcoin, BTC"
+            "keywords": "bitcoin,BTC"
         },
         {
             "subreddit": "bitcoin",
@@ -30,7 +30,7 @@ cryptocurrencies[ETHEREUM] = {
     "subreddits": [
         {
             "subreddit": "CryptoCurrency",
-            "keywords": "Ethereum, ETH"
+            "keywords": "Ethereum,ETH"
         },
         {
             "subreddit": "ethereum",

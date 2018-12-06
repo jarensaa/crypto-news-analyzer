@@ -3,7 +3,7 @@ import requests
 from ratelimit import limits, sleep_and_retry
 
 baseUrl = "https://api.pushshift.io/reddit/search/submission/"
-HOUR = 3600
+MINUTE = 60
 
 
 def buildQuery(timeFrom, timeTo, subreddit, size="100", keywords="", author="", aggs="", metadata="true", frequency="hour", advanced="false", sort="desc", domain="", sort_type="num_comments"):
@@ -30,7 +30,7 @@ def buildQuery(timeFrom, timeTo, subreddit, size="100", keywords="", author="", 
     """
 
     arguments = []
-    arguments.append("q=" + keywords)
+    arguments.append("q=" + keywords.replace(",", "%2C"))
     arguments.append("after="+str(timeFrom))
     arguments.append("before="+str(timeTo))
     arguments.append("subreddit=" + str(subreddit))
@@ -65,37 +65,23 @@ def extractFeaturesFromData(inputdata):
     for index, redditPost in enumerate(inputdata):
         cleanedPost = {}
         timestamp = redditPost["created_utc"]
-        num_comments = redditPost["num_comments"]
 
         timeFrom = min(timeFrom, timestamp)
         timeTo = max(timeTo, timestamp)
 
         cleanedPost["timestamp"] = timestamp
         cleanedPost["score"] = redditPost["score"]
-        cleanedPost["num_comments"] = num_comments
+        cleanedPost["num_comments"] = int(redditPost["num_comments"])
         cleanedPost["permalink"] = redditPost["permalink"]
         cleanedPost["subreddit"] = redditPost["subreddit"]
 
         cleanedPosts.append(cleanedPost)
 
-    return cleanedPosts, timeFrom, timeTo
+    return cleanedPosts
 
 
 @sleep_and_retry
-@limits(calls=10, period=HOUR)
-def getPushshiftResponse(url):
-    """Rate limited function to keep within guidelines of pushshift API
-
-    Arguments:
-      url {String} -- Url to query
-
-    Returns:
-      [requests.response] -- respone from Pushshift API.
-    """
-
-    return requests.get(url)
-
-
+@limits(calls=200, period=MINUTE)
 def queryPushshift(fromTime, toTime, subreddit, keywords="", limit="100"):
     """Gets and filters data from the Pushshift API
 
@@ -112,6 +98,6 @@ def queryPushshift(fromTime, toTime, subreddit, keywords="", limit="100"):
     """
 
     queryString = buildQuery(fromTime, toTime, subreddit, keywords=keywords, size=limit)
-    response = getPushshiftResponse(queryString)
+    response = requests.get(queryString)
     redditPostData = response.json()['data']
     return extractFeaturesFromData(redditPostData)

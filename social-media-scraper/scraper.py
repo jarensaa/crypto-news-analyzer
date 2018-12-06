@@ -18,20 +18,22 @@ def validateEnvironments():
         quit()
 
 
-def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords):
+def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords, root=True):
     retryLimit = 5
     retryCounter = 0
+    limit = 1000
 
     # TODO: Add functionaliy for handling the case where the number of submissions is over the pushshift limit.
     # Initial thought: Check if number of returned posts are at the limit, divide interval in two and repeat query recursivly.
     # This is actually a fun algorithm which i would love to present. /Jens
 
-    print("Querying subreddit: {} for keywords {} in time interval [{:10d},{:10d}]".format(
-        subreddit, keywords, fromTime, toTime))
+    if(root):
+        print("Querying subreddit: {} for keywords {} in time interval [{:10d},{:10d}]".format(
+            subreddit, keywords, fromTime, toTime))
     while(retryCounter < retryLimit):
-        (cleanedSubmissions, timeFrom, timeTo) = queryPushshift(fromTime, toTime, subreddit, keywords=keywords)
+        submissions = queryPushshift(fromTime, toTime, subreddit, keywords=keywords, limit=str(limit))
 
-        if(len(cleanedSubmissions) == 0):
+        if(len(submissions) == 0):
             print("Failed to fetch posts from pushshift. Retrying...")
             retryCounter += 1
             time.sleep(10)
@@ -42,10 +44,19 @@ def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords):
         print("Can not connect to pushshift server.")
         quit()
 
-    print("{:3d} submissions fetched from pushshift. Time used:{:3d}seconds".format(
-        len(cleanedSubmissions), (datetime.now() - StartTime).seconds))
+    if(len(submissions) == limit):
+        timerange = toTime - fromTime
+        halfTime = int(timerange / 2)
+        submissions = getSubmissionsFromPushshift(fromTime, toTime - halfTime, subreddit, keywords, root=False) + \
+            getSubmissionsFromPushshift(fromTime + halfTime + 1, toTime, subreddit, keywords, root=False)
 
-    return cleanedSubmissions
+    if(root):
+        # Alernative: Sort on time and divide into ranges. Sort each of these on commments for querying on the reddit api
+        submissions = sorted(submissions, key=lambda k: k["num_comments"], reverse=True)
+        print("{:3d} submissions fetched from pushshift. Time used:{:3d}seconds".format(
+            len(submissions), (datetime.now() - StartTime).seconds))
+
+    return submissions
 
 
 def addRedditDataToSubmissions(submissions, tag, min_comments=10, max_submission_api_calls=50):
