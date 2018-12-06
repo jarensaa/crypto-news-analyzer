@@ -6,6 +6,12 @@ MONGOUSER = os.environ.get('MONGOUSER')
 
 
 def validateMongoEnvironment():
+    """ Validates if mongoDB environment variables are set.
+
+    Returns:
+      boolean -- True if environment is valid, False if not.
+    """
+
     valid = True
     if(MONGOPW == None):
         print("MONGOPW environment variable is missing")
@@ -37,7 +43,3 @@ def getMongoClient():
         exit()
 
     return client
-
-
-def postObjectsToDatabase(collection, objects):
-    collection.insert_many(objects)

@@ -7,8 +7,6 @@ MONGOUSER=<Your database username>
 MONGOPW=<Your database password>
 REDDIT_CLIENT_ID=<Your reddit application client ID>
 REDDIT_CLIENT_SECRET=<Your reddit application client secret>
-REDDIT_PASSWORD=<Your reddit password>
-REDDIT_USERNAME=<Your reddit username>
 ```
 
 ## Run locally
