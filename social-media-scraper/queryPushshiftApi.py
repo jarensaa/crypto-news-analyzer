@@ -6,7 +6,7 @@ baseUrl = "https://api.pushshift.io/reddit/search/submission/"
 HOUR = 3600
 
 
-def buildQuery(timeFrom, timeTo, subreddit, size="1000", keywords="", author="", aggs="", metadata="true", frequency="hour", advanced="false", sort="desc", domain="", sort_type="num_comments"):
+def buildQuery(timeFrom, timeTo, subreddit, size="100", keywords="", author="", aggs="", metadata="true", frequency="hour", advanced="false", sort="desc", domain="", sort_type="num_comments"):
     """Builds a url which can be used to query the pushshift API.
 
     Arguments:
@@ -46,7 +46,7 @@ def buildQuery(timeFrom, timeTo, subreddit, size="1000", keywords="", author="",
     return str(baseUrl) + "?" + "&".join(arguments)
 
 
-def extractFeaturesFromData(inputdata, minComments, maxSubmissions):
+def extractFeaturesFromData(inputdata):
     """ Takes raw data from the pushshift API and reduces it to specific features.
 
     Arguments:
@@ -69,12 +69,6 @@ def extractFeaturesFromData(inputdata, minComments, maxSubmissions):
 
         timeFrom = min(timeFrom, timestamp)
         timeTo = max(timeTo, timestamp)
-
-        if(num_comments < minComments):
-            return cleanedPosts, timeFrom, timeTo
-
-        if(index >= maxSubmissions):
-            return cleanedPosts, timeFrom, timeTo
 
         cleanedPost["timestamp"] = timestamp
         cleanedPost["score"] = redditPost["score"]
@@ -102,15 +96,13 @@ def getPushshiftResponse(url):
     return requests.get(url)
 
 
-def queryPushshift(fromTime, toTime, subreddit, minComments, maxSubmissions, keywords=""):
+def queryPushshift(fromTime, toTime, subreddit, keywords="", limit="100"):
     """Gets and filters data from the Pushshift API
 
     Arguments:
       fromTime {long} -- Unix time, start of timerange to query.
       toTime {long} -- Unix time, end of timerange to query.
       subreddit {string} -- subreddit to query
-      minComments {int} -- Sets the minimum number of comments which has to be present on a submission.
-      maxSubmissions {int} -- Sets the maximum amount of sumbmissions to retrieve
 
     Keyword Arguments:
       keywords {str} -- keywords used to search for posts within a subreddit (default: {""})
@@ -119,7 +111,7 @@ def queryPushshift(fromTime, toTime, subreddit, minComments, maxSubmissions, key
       dict -- A list of json objects with filtered features.
     """
 
-    queryString = buildQuery(fromTime, toTime, subreddit)
+    queryString = buildQuery(fromTime, toTime, subreddit, keywords=keywords, size=limit)
     response = getPushshiftResponse(queryString)
     redditPostData = response.json()['data']
-    return extractFeaturesFromData(redditPostData, minComments, maxSubmissions)
+    return extractFeaturesFromData(redditPostData)
