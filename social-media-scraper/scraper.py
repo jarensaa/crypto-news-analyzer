@@ -11,6 +11,10 @@ StartTime = datetime.now()
 
 
 def validateEnvironments():
+    """Check if all environment variables for reddit and mongodb is set. 
+      The program terminates if this is not the case
+    """
+
     if(not validateRedditEnvironment()):
         quit()
 
@@ -19,17 +23,30 @@ def validateEnvironments():
 
 
 def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords, root=True):
+    """ Get submissions from the pushshift API by recursion. If the limit of the pushshift api is hit, the time slot is divided
+    into two. The function is then called recursivly for each range.
+
+    Arguments:
+      fromTime {long} -- Unix timestamp indicating start of range to query over.
+      toTime {long} -- Unix timestamp indicating end of range to query over.
+      subreddit {string} -- Subreddit to query
+      keywords {str} -- keywords used to search for posts within a subreddit
+
+    Keyword Arguments:
+      root {boolean} -- Indicates if the function is the root call.
+
+    Returns:
+      list() -- of submissions 
+    """
+
     retryLimit = 5
     retryCounter = 0
     limit = 1000
 
-    # TODO: Add functionaliy for handling the case where the number of submissions is over the pushshift limit.
-    # Initial thought: Check if number of returned posts are at the limit, divide interval in two and repeat query recursivly.
-    # This is actually a fun algorithm which i would love to present. /Jens
-
     if(root):
         print("Querying subreddit: {} for keywords {} in time interval [{:10d},{:10d}]".format(
             subreddit, keywords, fromTime, toTime))
+
     while(retryCounter < retryLimit):
         submissions = queryPushshift(fromTime, toTime, subreddit, keywords=keywords, limit=str(limit))
 
@@ -60,6 +77,22 @@ def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords, root=True
 
 
 def addRedditDataToSubmissions(submissions, tag, min_comments=10, max_submission_api_calls=50):
+    """ Queries the reddit api to append true scores to a post. Also fetches comments related to
+        the posts.
+
+    Arguments:
+      submissions {list()} -- A list with submissions, ordered in prioritzed order for querying.
+      tag {string} -- A tag relating the post to the query
+
+    Keyword Arguments:
+      min_comments {int} -- The minimum amount of comments which need to be on a 
+                            submission for a query to be performed (default: {10})
+      max_submission_api_calls {int} -- Max amount of API calls to the reddit API (default: {50})
+
+    Returns:
+      list() -- A list of comments related to the queried submissions.
+    """
+
     print("Fetching data from reddit. Doing up to {:d} queries".format(
         min(max_submission_api_calls, len(submissions))))
 
