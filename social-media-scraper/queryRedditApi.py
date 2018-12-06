@@ -33,8 +33,26 @@ def getSubmissionScore(submission):
     Returns:
       int -- Score on the post
     """
-
     return submission.score
+
+
+def getSubmissionComments(submission, tag):
+    submissionPermalink = submission.permalink
+    submissionComments = submission.comments
+    submissionComments.replace_more(limit=20)
+
+    comments = []
+    for comment in submissionComments.list():
+        comment = {
+            "timestamp": comment.created_utc,
+            "submission_permalink": submissionPermalink,
+            "permalink": comment.permalink,
+            "score": comment.score,
+            "tag": tag
+        }
+        comments.append(comment)
+
+    return comments
 
 
 def getRedditInstance():

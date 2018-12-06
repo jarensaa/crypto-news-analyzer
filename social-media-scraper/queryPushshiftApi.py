@@ -80,6 +80,7 @@ def extractFeaturesFromData(inputdata, minComments, maxSubmissions):
         cleanedPost["score"] = redditPost["score"]
         cleanedPost["num_comments"] = num_comments
         cleanedPost["permalink"] = redditPost["permalink"]
+        cleanedPost["subreddit"] = redditPost["subreddit"]
 
         cleanedPosts.append(cleanedPost)
 

@@ -1,9 +1,11 @@
 from queryPushshiftApi import queryPushshift
 from pprint import pprint
-from queryRedditApi import getSubmission, validateRedditEnvironment, getSubmissionScore, getRedditInstance
+from queryRedditApi import getSubmission, validateRedditEnvironment, getSubmissionScore, getRedditInstance, getSubmissionComments
 from mongoDbEngine import validateMongoEnvironment, getMongoClient
 from datetime import datetime
+from cryptoRegistry import BITCOIN, ETHEREUM, generateCoinScrapingData
 import time
+
 
 StartTime = datetime.now()
 
@@ -16,14 +18,15 @@ def validateEnvironments():
         quit()
 
 
-def getSubmissionsFromPushshift():
+def getSubmissionsFromPushshift(fromTime, toTime, subreddit, keywords):
     retryLimit = 5
     retryCounter = 0
 
+    print("Querying subreddit: {} for keywords {} in time interval [{:10d},{:10d}]".format(
+        subreddit, keywords, fromTime, toTime))
     while(retryCounter < retryLimit):
-
         (cleanedSubmissions, timeFrom, timeTo) = queryPushshift(
-            1544004364, 1544090764, "cryptocurrency", 10, 40)
+            fromTime, toTime, subreddit, 10, 40, keywords=keywords)
 
         if(len(cleanedSubmissions) == 0):
             print("Failed to fetch posts from pushshift. Retrying...")
@@ -42,9 +45,10 @@ def getSubmissionsFromPushshift():
     return cleanedSubmissions
 
 
-def addRedditDataToSubmissions(submissions):
+def addRedditDataToSubmissions(submissions, tag):
     # The reddit instance offers built-in rate limit checks. We therefore use the same instance for all calls.
     reddit_instance = getRedditInstance()
+    comments = []
 
     StartTime = datetime.now()
     for index, post in enumerate(submissions):
@@ -55,6 +59,10 @@ def addRedditDataToSubmissions(submissions):
         permalink = post['permalink']
         reddit_submission_instance = getSubmission(permalink, reddit_instance)
         post['score'] = getSubmissionScore(reddit_submission_instance)
+        post["tag"] = tag
+        comments += getSubmissionComments(reddit_submission_instance, tag)
+
+    return comments
 
 
 def storeSubmissionsInMongoDB(submissions):
@@ -64,7 +72,25 @@ def storeSubmissionsInMongoDB(submissions):
     mongoClient.close()
 
 
+def storeCommentsInMongoDB(comments):
+    mongoClient = getMongoClient()
+    collection = mongoClient.reddit_data.comments
+    collection.insert_many(comments)
+    mongoClient.close()
+
+
 validateEnvironments()
-submissions = getSubmissionsFromPushshift()
-addRedditDataToSubmissions(submissions)
-storeSubmissionsInMongoDB(submissions)
+scrapingInput = generateCoinScrapingData(BITCOIN, 1544004364, 1544090764)
+
+fromTime = scrapingInput["fromTime"]
+toTime = scrapingInput["toTime"]
+tag = scrapingInput["tag"]
+subreddits = scrapingInput["subreddits"]
+
+for subreddit in subreddits:
+    subredditName = subreddit["subreddit"]
+    keywords = subreddit["keywords"]
+    submissions = getSubmissionsFromPushshift(fromTime, toTime, subredditName, keywords)
+    comments = addRedditDataToSubmissions(submissions, tag)
+    storeSubmissionsInMongoDB(submissions)
+    storeCommentsInMongoDB(comments)
