@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-.vscode
-creds
-=======
 .vscode
 
 .metadata
@@ -60,6 +56,4 @@ local.properties
 .scala_dependencies
 .worksheet
 
-creds
 
->>>>>>> ab7971387c10333b09e48060aa28f8d2fe7eccfb

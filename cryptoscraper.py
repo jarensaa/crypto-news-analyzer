@@ -44,11 +44,12 @@ def configure_db():
     return client
 
 
-def store_data(data, client, callnum):
+def store_data(data, client, callnum, coin):
     """ store data in mongodb collection
     :param data: json data object containing the data to be stored
     :param collection: mongodb collection to store into
-    :param callnum: current number of call for progressbar
+    :param callnum: int, current number of call for progressbar
+    :param coin: String, Coin ticker as used in scrape_data()
     """
 
     db = client.cryptoposts
@@ -57,6 +58,7 @@ def store_data(data, client, callnum):
     print("Inserting data into "+ str(collection.name)+ ", week " + str(callnum))
 
     for entry in tqdm(data):
+        entry["coin"]=coin
         collection.insert_one(entry)
      
 
@@ -81,7 +83,7 @@ def scrape_data(coins, ts_from, ts_to, granularity="histohour?"):
 
             page = call_api(url)
             data = page.json()['Data']
-            store_data(data, client, i)
+            store_data(data, client, i, coin)
 
     client.close()
 
@@ -115,4 +117,4 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     return timestamps
 
 # show example call 
-scrape_data(['BTC'],"6.12.2017","6.12.2018")
+scrape_data(['BTC'],"1.12.2017","6.12.2017")
