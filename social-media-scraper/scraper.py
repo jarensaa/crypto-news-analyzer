@@ -158,3 +158,4 @@ def runScraper(cryptocurrency, fromTime, toTime):
 
 
 runScraper(BITCOIN, 1544004364, 1544090764)
+runScraper(ETHEREUM, 1543622400, 1544097600)
