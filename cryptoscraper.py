@@ -7,6 +7,19 @@ import json
 import requests
 import pymongo
 import os 
+from ratelimit import limits, sleep_and_retry
+from tqdm import tqdm
+
+SECOND = 1
+
+@sleep_and_retry
+@limits(calls=20, period=SECOND)
+def call_api(url):
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        raise Exception('API response: {}'.format(response.status_code))
+    return response
 
 
 def configure_db():
@@ -23,20 +36,27 @@ def configure_db():
         client = pymongo.MongoClient("mongodb+srv://{}:{}@cluster-kaw-loi4k.mongodb.net/test?retryWrites=true"\
             .format(pw,name))
         print("Connected successfully.") 
+    
     except:   
         print("Could not connect to MongoDB") 
     
-    db = client.cryptoposts
-    collection = db.cryptocompare
-    return collection
+    
+    return client
 
 
-def store_data(data, collection):
+def store_data(data, client, callnum):
     """ store data in mongodb collection
     :param data: json data object containing the data to be stored
     :param collection: mongodb collection to store into
+    :param callnum: current number of call for progressbar
     """
-    for entry in data:
+
+    db = client.cryptoposts
+    collection = db.cryptocompare
+
+    print("Inserting data into "+ str(collection.name)+ ", week " + str(callnum))
+
+    for entry in tqdm(data):
         collection.insert_one(entry)
      
 
@@ -50,19 +70,20 @@ def scrape_data(coins, ts_from, ts_to, granularity="histohour?"):
     """
 
     # TODO: change granularity by changing api string to query 
-    collection = configure_db()
+    client = configure_db()
     timestamps = parse_time_frame(ts_from,ts_to)
 
     
     for coin in coins:
-        for ts_call in timestamps:
+        for i in range(len(timestamps)):
             url = 'https://min-api.cryptocompare.com/data/{}fsym={}&tsym=USD&toTs={}'\
-                .format(granularity, coin, str(ts_call))
+                .format(granularity, coin, str(timestamps[i]))
 
-            page = requests.get(url)
+            page = call_api(url)
             data = page.json()['Data']
-            store_data(data, collection)
+            store_data(data, client, i)
 
+    client.close()
 
 
 def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
@@ -94,4 +115,4 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     return timestamps
 
 # show example call 
-scrape_data(['BTC'],"1.11.2018","1.10.2018")
+scrape_data(['BTC'],"6.12.2017","6.12.2018")
