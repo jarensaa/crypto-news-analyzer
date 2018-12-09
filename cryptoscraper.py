@@ -33,6 +33,8 @@ def configure_db():
         # adjust this in local and server environment
         pw = os.environ.get('MONGOPW')
         name = os.environ.get('MONGOUSER')
+        pw = "jack"
+        name = "jack"
         client = pymongo.MongoClient("mongodb+srv://{}:{}@cluster-kaw-loi4k.mongodb.net/test?retryWrites=true"\
             .format(pw,name))
         print("Connected successfully.") 
@@ -53,7 +55,7 @@ def store_data(data, client, callnum, coin):
     """
 
     db = client.cryptoposts
-    collection = db.cryptocompare
+    collection = db.cryptodata
 
     print("Inserting data into "+ str(collection.name)+ ", week " + str(callnum))
 
@@ -64,14 +66,13 @@ def store_data(data, client, callnum, coin):
 
 def scrape_data(coins, ts_from, ts_to, granularity="histohour?"):
     """
-    scrape data and store it in mongodb
+    scrape data and store it in MongoDB
     :param coins: Array of Strings including the ticker, e.g. ["BTC","ETH"]
     :param ts_from: start time string in the following format "DD.MM.YYYY"
     :param ts_to: start time string in the following format "DD.MM.YYYY"
     :param granularity: string defining which api granularity to call
     """
 
-    # TODO: change granularity by changing api string to query 
     client = configure_db()
     timestamps = parse_time_frame(ts_from,ts_to)
 
@@ -94,8 +95,6 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     :param ts_to: string, ending date in format "DD.MM.YYYY"
     :return: array of unix timestamps to be passed to api call
     """
-    # TODO: timeformat in general settings
-    # TODO: consider timestamp conversion for different timezone
 
     ts_to =  dt.datetime.strptime(ts_to, timeformat)
     ts_from =  dt.datetime.strptime(ts_from, timeformat)
@@ -117,4 +116,4 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     return timestamps
 
 # show example call 
-scrape_data(['BTC'],"1.12.2017","6.12.2017")
+#scrape_data(['BTC','ETH'],"9.12.2016","8.12.2017")
