@@ -33,8 +33,6 @@ def configure_db():
         # adjust this in local and server environment
         pw = os.environ.get('MONGOPW')
         name = os.environ.get('MONGOUSER')
-        pw = "jack"
-        name = "jack"
         client = pymongo.MongoClient("mongodb+srv://{}:{}@cluster-kaw-loi4k.mongodb.net/test?retryWrites=true"\
             .format(pw,name))
         print("Connected successfully.") 

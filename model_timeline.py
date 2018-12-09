@@ -50,13 +50,5 @@ def generate_timeseries(coin):
     timeseries = build_timeline(cursor)
     return timeseries
 
-
-def plot_timeseries(timeseries):
-    plt.plot(timeseries['price'])
-    #plt.show()
-    plt.savefig("fig.png")
-    return None
-
-
-timeseries = generate_timeseries("BTC")
-plot_timeseries(timeseries)
+# example call
+# timeseries = generate_timeseries("BTC")
