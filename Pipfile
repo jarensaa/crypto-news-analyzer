@@ -10,6 +10,8 @@ pandas = "*"
 numpy = "*"
 requests = "*"
 pymongo = "*"
+dnspython = "*"
+ruptures = "*"
 
 [requires]
 python_version = "3.5"
