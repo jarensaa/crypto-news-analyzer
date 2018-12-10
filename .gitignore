@@ -11,7 +11,7 @@ local.properties
 .settings/
 .loadpath
 .recommenders
-*pycache*
+__pycache__/
 
 # External tool builders
 .externalToolBuilders/

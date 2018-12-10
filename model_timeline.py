@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import datetime as dt
 
 
+
 def query_database(coin):
     """ queries the crypto database for price and volume 
     :param coin: String, coin ticker as used in cryptoscraper
@@ -13,7 +14,7 @@ def query_database(coin):
     """
 
     client = configure_db()
-    coll = client.cryptoposts.cryptodata
+    coll = client.cryptoposts.crypto
     
     query = {}
     query["coin"] = coin
@@ -29,14 +30,17 @@ def build_timeline(cursor):
 
     volume = []
     price = []
+    timestamp_string = []
     timestamp = []
 
     for entry in cursor:
         volume.append(entry['volumefrom'])
         price.append(entry['high'])
-        timestamp.append(dt.datetime.fromtimestamp(int(entry['time'])).strftime('%d.%m.%Y %H:%M:%S'))
+        timestamp_string.append(dt.datetime.fromtimestamp(int(entry['time'])).strftime('%d.%m.%Y %H:%M:%S'))
+        t = dt.datetime.fromtimestamp(int(entry['time']))
+        timestamp.append(np.datetime64(t))
 
-    timeseries = pd.DataFrame(data = {'volume' : volume , 'price' : price }, index=timestamp)
+    timeseries = pd.DataFrame(data = {'volume' : volume , 'price' : price, 'timestamp_string' : timestamp_string }, index=timestamp)
 
     return timeseries
     
@@ -63,3 +67,6 @@ def plot_price_volume(from, to, df):
 # example call
 timeseries = generate_timeseries("BTC")
 print(timeseries)
+
+
+timeseries = generate_timeseries("BTC")
