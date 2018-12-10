@@ -50,5 +50,16 @@ def generate_timeseries(coin):
     timeseries = build_timeline(cursor)
     return timeseries
 
+def plot_price_volume(from, to, df):
+    fig, ax1 = plt.subplots(figsize=(15,6))
+    ax1.plot(timestamp_arr_sample, price_arr_sample, 'b-')
+    ax1.set_xlabel('timestamp')
+    ax1.set_ylabel('price (high)', color='b')
+    ax2 = ax1.twinx()
+    ax2.plot(timestamp_arr_sample, vol_arr_sample, 'g-')
+    ax2.set_ylabel('volume', color='g')
+    plt.xticks(random.sample(timestamp_arr_sample.tolist(), 10), rotation='vertical')
+    plt.show()
 # example call
-# timeseries = generate_timeseries("BTC")
+timeseries = generate_timeseries("BTC")
+print(timeseries)
