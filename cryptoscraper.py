@@ -53,7 +53,7 @@ def store_data(data, client, callnum, coin):
     """
 
     db = client.cryptoposts
-    collection = db.cryptodata
+    collection = db.crypto
 
     print("Inserting data into "+ str(collection.name)+ ", week " + str(callnum))
 
@@ -114,4 +114,4 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
     return timestamps
 
 # show example call 
-#scrape_data(['BTC','ETH'],"9.12.2016","8.12.2017")
+# scrape_data(['BTC','ETH'],"9.12.2016","10.12.2018")
