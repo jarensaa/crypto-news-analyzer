@@ -12,6 +12,8 @@ requests = "*"
 pymongo = "*"
 dnspython = "*"
 ruptures = "*"
+ratelimit = "*"
+tqdm = "*"
 
 [requires]
 python_version = "3.5"
