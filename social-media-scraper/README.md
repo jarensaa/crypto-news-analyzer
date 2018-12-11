@@ -5,6 +5,8 @@ The code is dependent on the environment variables:
 ```
 MONGOUSER=<Your database username>
 MONGOPW=<Your database password>
+REDDIT_CLIENT_ID=<Your reddit application client ID>
+REDDIT_CLIENT_SECRET=<Your reddit application client secret>
 ```
 
 ## Run locally
