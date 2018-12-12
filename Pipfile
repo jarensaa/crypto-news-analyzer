@@ -12,8 +12,11 @@ pandas = "*"
 numpy = "*"
 requests = "*"
 pymongo = "*"
-praw = "*"
+dnspython = "*"
+ruptures = "*"
 ratelimit = "*"
+tqdm = "*"
+praw = "*"
 
 [requires]
 python_version = "3"
