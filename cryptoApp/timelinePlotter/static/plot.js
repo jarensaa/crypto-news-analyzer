@@ -1,3 +1,49 @@
+function getChangepointPlot(changePoints, maxTime, minTime, xScale, colors) {
+  bands = [];
+  for (index in changePoints) {
+    if (index == changePoints.length - 1) {
+      bands.push({
+        low: changePoints[index].time * 1000,
+        high: maxTime + 10000000,
+        color: colors[index % 2]
+      });
+      break;
+    }
+
+    if (index == 0) {
+      bands.push({
+        low: minTime - 10000000,
+        high: changePoints[index].time * 1000,
+        color: colors[(index + 1) % 2]
+      });
+    }
+
+    bands.push({
+      low: changePoints[index].time * 1000,
+      high: changePoints[parseInt(index) + 1].time * 1000,
+      color: colors[index % 2]
+    });
+  }
+
+  var bandPlot = new Plottable.Plots.Rectangle()
+    .y(0)
+    .y2(function() {
+      return bandPlot.height();
+    })
+    .x(function(d) {
+      return d.low;
+    }, xScale)
+    .x2(function(d) {
+      return d.high;
+    })
+    .attr("fill", function(d) {
+      return d.color;
+    })
+    .addDataset(new Plottable.Dataset(bands));
+
+  return bandPlot;
+}
+
 function plotAttribute(input) {
   d3.json(input.filepath, function(error, data) {
     d3.json(input.crypto, function(error2, cryptoData) {
@@ -17,22 +63,30 @@ function plotAttribute(input) {
       numComments = [];
       commentScore = [];
 
+      minTime = Infinity;
+      maxTime = -1;
+
       for (dataPoint in data) {
+        pointTime = data[dataPoint]["endTime"] * 1000;
+
+        minTime = Math.min(minTime, pointTime);
+        maxTime = Math.max(maxTime, pointTime);
+
         numSubmissions.push({
           y: data[dataPoint]["submissions"],
-          x: data[dataPoint]["endTime"] * 1000
+          x: pointTime
         });
         submissionScore.push({
           y: data[dataPoint]["submissionScores"],
-          x: data[dataPoint]["endTime"] * 1000
+          x: pointTime
         });
         numComments.push({
           y: data[dataPoint]["comments"],
-          x: data[dataPoint]["endTime"] * 1000
+          x: pointTime
         });
         commentScore.push({
           y: data[dataPoint]["commentScores"],
-          x: data[dataPoint]["endTime"] * 1000
+          x: pointTime
         });
       }
 
@@ -81,7 +135,19 @@ function plotAttribute(input) {
         "90"
       );
 
-      var group = new Plottable.Components.Group([plot, cryptoPlot]);
+      plots = [plot, cryptoPlot];
+
+      if (input.changePoints.length > 0) {
+        plot = [
+          getChangepointPlot(input.changePoints, maxTime, minTime, xScale, [
+            "#ffffff",
+            "#f0f0f0"
+          ])
+        ];
+        plots = plot.concat(plots);
+      }
+
+      var group = new Plottable.Components.Group(plots);
       var chart = new Plottable.Components.Table([
         [null, null, legend, null, null],
         [mediaLabel, yAxis, group, yAxis2, cryptoLabel],
@@ -93,10 +159,21 @@ function plotAttribute(input) {
   });
 }
 
-input = {
+var input = {
   filepath: "timeline.json",
   outputSvg: "plot",
-  crypto: "crypto.json"
+  crypto: "crypto.json",
+  changePointFile: "changepoints.json"
 };
 
-plotAttribute(input);
+d3.json(input.changePointFile, function(error3, changePoints) {
+  changePointList = [];
+
+  if (changePoints != null) {
+    changePointList = changePoints;
+  }
+
+  input.changePoints = changePointList;
+
+  plotAttribute(input);
+});
