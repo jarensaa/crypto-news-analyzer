@@ -1,6 +1,6 @@
 from cryptoApp.socialMediaScraper.scraper import runScraper
 from cryptoApp.socialMediaAggregator.aggregator import runAggregator
-from cryptoApp.timelinePlotter.storageService import buildSeries
+#from cryptoApp.timelinePlotter.storageService import buildSeries
 from cryptoApp.constants.cryptoRegistry import BITCOIN
 from cryptoApp.constants.cryptoRegistry import cryptocurrencies
 from cryptoApp.constants.unixTime import DAY
@@ -21,7 +21,7 @@ tag = cryptocurrencies[currency]["tag"]
 for dayIndex in range(days):
     intervalStart = startTime + dayIndex * DAY
     intervalEnd = startTime + DAY + dayIndex * DAY
-    #runScraper(currency, intervalStart, intervalEnd, 200, 2)
+    runScraper(currency, intervalStart, intervalEnd, 200, 2)
 
 seriesId = runAggregator(startTime, endTime, currency)
-buildSeries(seriesId)
+# buildSeries(seriesId)

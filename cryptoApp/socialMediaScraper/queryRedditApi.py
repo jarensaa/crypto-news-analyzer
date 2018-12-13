@@ -48,7 +48,8 @@ def getSubmissionComments(submission, tag):
             "submission_permalink": submissionPermalink,
             "permalink": comment.permalink,
             "score": comment.score,
-            "tag": tag
+            "tag": tag,
+            "_id": comment.permalink
         }
         comments.append(comment)
 
