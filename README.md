@@ -27,3 +27,11 @@ Alternativly, you can start a shell with the environment with:
 ```
 pipenv shell
 ```
+
+Scripts can be run by utilization of make:
+
+```
+  $ make <procedure>
+```
+
+please see makefile for available commands.
