@@ -2,7 +2,7 @@ from cryptoApp.mongoService.setup import validateMongoEnvironment
 from cryptoApp.mongoService.setup import getMongoClient
 from cryptoApp.mongoService.queries import queryDatabase
 from cryptoApp.mongoService.queries import bulkPostToDatabase
-from cryptoApp.constants.unixTme import HOUR, DAY
+from cryptoApp.constants.unixTime import HOUR, DAY
 from pprint import pprint
 from time import mktime
 from datetime import datetime
@@ -134,6 +134,7 @@ def runAggregator(startTime, endTime, tag, granularity=HOUR, submissionWeight=3,
 
     validateMongoEnvironment()
     client = getMongoClient()
+    print("Aggregating data about {} in the time interval [{},{}]".format(tag, startTime, endTime))
 
     (aggregationId, aggregation) = getAggregation(client, startTime, endTime, tag, granularity=granularity, submissionWeight=submissionWeight,
                                                   submissionScoreWeight=submissionScoreWeight, commentWeight=commentWeight, commentScoreWeight=commentScoreWeight)

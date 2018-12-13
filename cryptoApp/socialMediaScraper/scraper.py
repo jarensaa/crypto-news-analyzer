@@ -1,9 +1,16 @@
-from queryPushshiftApi import queryPushshift
-from pprint import pprint
-from queryRedditApi import getSubmission, validateRedditEnvironment, getSubmissionScore, getRedditInstance, getSubmissionComments
-from mongoDbEngine import validateMongoEnvironment, getMongoClient
+from cryptoApp.mongoService.setup import validateMongoEnvironment
+from cryptoApp.mongoService.setup import getMongoClient
+from cryptoApp.socialMediaScraper.queryPushshiftApi import queryPushshift
+from cryptoApp.constants.cryptoRegistry import BITCOIN
+from cryptoApp.constants.cryptoRegistry import ETHEREUM
+from cryptoApp.constants.cryptoRegistry import generateCoinScrapingData
+from cryptoApp.socialMediaScraper.queryRedditApi import getSubmission
+from cryptoApp.socialMediaScraper.queryRedditApi import validateRedditEnvironment
+from cryptoApp.socialMediaScraper.queryRedditApi import getSubmissionScore
+from cryptoApp.socialMediaScraper.queryRedditApi import getRedditInstance
+from cryptoApp.socialMediaScraper.queryRedditApi import getSubmissionComments
 from datetime import datetime
-from cryptoRegistry import BITCOIN, ETHEREUM, generateCoinScrapingData
+from pprint import pprint
 import time
 
 
@@ -124,6 +131,8 @@ def addRedditDataToSubmissions(submissions, tag, min_comments=10, max_submission
 
 
 def storeSubmissionsInMongoDB(submissions):
+    if(len(submissions) == 0):
+        return
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.submissions
     collection.insert_many(submissions)
@@ -132,6 +141,8 @@ def storeSubmissionsInMongoDB(submissions):
 
 
 def storeCommentsInMongoDB(comments):
+    if(len(comments) == 0):
+        return
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.comments
     collection.insert_many(comments)
@@ -139,7 +150,7 @@ def storeCommentsInMongoDB(comments):
     mongoClient.close()
 
 
-def runScraper(cryptocurrency, fromTime, toTime):
+def runScraper(cryptocurrency, fromTime, toTime, maxRedditQueries=50, min_comments=10):
     validateEnvironments()
     scrapingInput = generateCoinScrapingData(cryptocurrency, fromTime, toTime)
 
@@ -152,10 +163,16 @@ def runScraper(cryptocurrency, fromTime, toTime):
         subredditName = subreddit["subreddit"]
         keywords = subreddit["keywords"]
         submissions = getSubmissionsFromPushshift(fromTime, toTime, subredditName, keywords)
-        comments = addRedditDataToSubmissions(submissions, tag)
+        comments = addRedditDataToSubmissions(
+            submissions, tag, max_submission_api_calls=maxRedditQueries, min_comments=min_comments)
         storeSubmissionsInMongoDB(submissions)
         storeCommentsInMongoDB(comments)
 
 
-runScraper(BITCOIN, 1544004364, 1544090764)
-runScraper(ETHEREUM, 1543622400, 1544097600)
+def main():
+    runScraper(BITCOIN, 1544004364, 1544090764)
+    runScraper(ETHEREUM, 1543622400, 1544097600)
+
+
+if __name__ == "__main__":
+    main()

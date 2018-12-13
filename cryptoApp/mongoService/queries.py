@@ -22,6 +22,8 @@ def bulkPostToDatabase(collection, objects):
       collection {pymongo.database.collection} -- The database collection to post to.
       objects {list()} -- A list of json objects (dict) to post. 
     """
+    if(len(objects) == 0):
+        return
 
     collection.insert_many(objects)
     print("Posted {:d} new objects to MongoDB".format(len(objects)))
