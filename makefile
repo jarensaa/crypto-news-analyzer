@@ -9,5 +9,9 @@ media-scraper:
 media:
 	python3 ./cryptoApp/social-media-runner.py
 
+media+plot:
+	python3 ./cryptoApp/social-media-runner.py --plot
+
 plot:
-	python3 ./cryptoApp/timelinePlotter/plotter.py
+	python3 ./cryptoApp/timelinePlotter/plotter.py --plot
+
