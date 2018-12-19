@@ -23,7 +23,7 @@ tag = cryptocurrencies[currency]["tag"]
 for dayIndex in range(days):
     intervalStart = startTime + dayIndex * DAY
     intervalEnd = startTime + DAY + dayIndex * DAY
-    #runScraper(currency, intervalStart, intervalEnd, 200, 2)
+    runScraper(currency, intervalStart, intervalEnd, 200, 2)
 
 seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
                          submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)

@@ -1,3 +1,8 @@
+import sys
+from pymongo import InsertOne
+from pymongo.errors import BulkWriteError
+
+
 def queryDatabase(collection, jsonQuery):
     """Queries mongodb collection.
 
@@ -20,10 +25,32 @@ def bulkPostToDatabase(collection, objects):
 
     Arguments:
       collection {pymongo.database.collection} -- The database collection to post to.
-      objects {list()} -- A list of json objects (dict) to post. 
+      objects {list()} -- A list of json objects (dict) to post.
     """
     if(len(objects) == 0):
         return
 
     collection.insert_many(objects)
     print("Posted {:d} new objects to MongoDB".format(len(objects)))
+
+
+def bulkPostUniqueToDatabase(collection, objects):
+    """ Post a list of objects to the mongoDB database with the bulk api. Use for objects with custom _id field.
+    Ensures that duplicates are ignored, while new data is posted.
+
+    Arguments:
+      collection {[type]} -- [description]
+      objects {[type]} -- [description]
+    """
+    if(len(objects) == 0):
+        return
+
+    requests = []
+    for Object in objects:
+        requests.append(InsertOne(Object))
+
+    try:
+        response = collection.bulk_write(requests, ordered=False)
+        return (len(requests))
+    except BulkWriteError as error:
+        return error.details['nInserted']

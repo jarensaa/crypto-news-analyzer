@@ -74,6 +74,7 @@ def extractFeaturesFromData(inputdata):
         cleanedPost["num_comments"] = int(redditPost["num_comments"])
         cleanedPost["permalink"] = redditPost["permalink"]
         cleanedPost["subreddit"] = redditPost["subreddit"]
+        cleanedPost["_id"] = redditPost["permalink"]
 
         cleanedPosts.append(cleanedPost)
 

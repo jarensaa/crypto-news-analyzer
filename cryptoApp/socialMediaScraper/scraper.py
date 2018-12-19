@@ -1,5 +1,6 @@
 from cryptoApp.mongoService.setup import validateMongoEnvironment
 from cryptoApp.mongoService.setup import getMongoClient
+from cryptoApp.mongoService.queries import bulkPostUniqueToDatabase
 from cryptoApp.socialMediaScraper.queryPushshiftApi import queryPushshift
 from cryptoApp.constants.cryptoRegistry import BITCOIN
 from cryptoApp.constants.cryptoRegistry import ETHEREUM
@@ -131,22 +132,18 @@ def addRedditDataToSubmissions(submissions, tag, min_comments=10, max_submission
 
 
 def storeSubmissionsInMongoDB(submissions):
-    if(len(submissions) == 0):
-        return
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.submissions
-    collection.insert_many(submissions)
-    print("Posted {:d} new submissions to MongoDB".format(len(submissions)))
+    inserted = bulkPostUniqueToDatabase(collection, submissions)
+    print("Posted {:d} new submissions to MongoDB".format(inserted))
     mongoClient.close()
 
 
 def storeCommentsInMongoDB(comments):
-    if(len(comments) == 0):
-        return
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.comments
-    collection.insert_many(comments)
-    print("Posted {:d} new comments to MongoDB".format(len(comments)))
+    inserted = bulkPostUniqueToDatabase(collection, comments)
+    print("Posted {:d} new comments to MongoDB".format(inserted))
     mongoClient.close()
 
 
