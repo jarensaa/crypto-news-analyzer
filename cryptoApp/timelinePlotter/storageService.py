@@ -5,9 +5,7 @@ import json
 from pprint import pprint
 
 
-def buildSocialMediaSeries(seriesId):
-    validateMongoEnvironment()
-    client = getMongoClient()
+def buildTimeline(client, seriesId):
     query = {
         "seriesId": seriesId
     }
@@ -20,6 +18,26 @@ def buildSocialMediaSeries(seriesId):
     with open('cryptoApp/timelinePlotter/static/timeline.json', 'w+') as outputFile:
         json.dump(returnedData, outputFile)
 
+
+def buildSocialMediaEvents(client, seriesId):
+    query = {
+        "seriesId": seriesId
+    }
+    collection = client.reddit_data.timeline_events
+    returnedData = queryDatabase(collection, query)
+
+    for data in returnedData:
+        data["_id"] = "null"
+
+    with open('cryptoApp/timelinePlotter/static/media_events.json', 'w+') as outputFile:
+        json.dump(returnedData, outputFile)
+
+
+def buildSocialMediaSeries(seriesId):
+    validateMongoEnvironment()
+    client = getMongoClient()
+    buildTimeline(client, seriesId)
+    buildSocialMediaEvents(client, seriesId)
     client.close()
 
 

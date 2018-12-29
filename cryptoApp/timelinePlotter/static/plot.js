@@ -163,7 +163,7 @@ var input = {
   filepath: "timeline.json",
   outputSvg: "plot",
   crypto: "crypto.json",
-  changePointFile: "changepoints.json"
+  changePointFile: "media_events.json"
 };
 
 d3.json(input.changePointFile, function(error3, changePoints) {

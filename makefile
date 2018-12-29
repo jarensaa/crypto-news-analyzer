@@ -15,6 +15,9 @@ media+plot:
 media-noscrape:
 	python3 ./cryptoApp/social-media-runner.py --noscrape
 
+media-noscrape-plot:
+	python3 ./cryptoApp/social-media-runner.py --noscrape --plot
+
 plot:
 	python3 ./cryptoApp/timelinePlotter/plotter.py --plot
 
@@ -23,3 +26,5 @@ mathie1:
 
 mathie1-scrape:
 	python3 ./cryptoApp/utilityRunners/bitcoin1.py --scrape
+
+

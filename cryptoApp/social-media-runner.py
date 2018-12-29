@@ -2,6 +2,7 @@ from cryptoApp.socialMediaScraper.scraper import runScraper
 from cryptoApp.socialMediaAggregator.aggregator import runAggregator
 from cryptoApp.timelinePlotter.storageService import buildSocialMediaSeries
 from cryptoApp.timelinePlotter.storageService import buildCryptoDataSeries
+from cryptoApp.socialMediaEventDetection.detector import runEventDetector
 from cryptoApp.constants.cryptoRegistry import BITCOIN
 from cryptoApp.constants.cryptoRegistry import cryptocurrencies
 from cryptoApp.constants.unixTime import DAY
@@ -30,7 +31,10 @@ if("--noscrape" not in sys.argv):
 
 seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
                          submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)
+
+runEventDetector(seriesId)
 buildSocialMediaSeries(seriesId)
+
 
 if("--plot" in sys.argv):
     buildCryptoDataSeries(startTime, endTime, currency)
