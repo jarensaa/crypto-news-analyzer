@@ -2,6 +2,7 @@ from cryptoApp.mongoService.setup import validateMongoEnvironment
 from cryptoApp.mongoService.setup import getMongoClient
 from cryptoApp.mongoService.queries import queryDatabase
 from cryptoApp.mongoService.queries import bulkPostToDatabase
+from cryptoApp.mongoService.queries import postSingleObjectToDatabase
 from cryptoApp.constants.unixTime import HOUR, DAY
 from pprint import pprint
 from time import mktime
@@ -112,6 +113,23 @@ def getAggregation(mongoClient, startTime, endTime, tag, granularity=HOUR, submi
     return aggregationId, aggregations
 
 
+def postTimelineIndexToDatabase(client, timelineId, startTime, endTime, tag, granularity, submissionWeight, submissionScoreWeight, commentWeight, commentScoreWeight):
+    collection = client.reddit_data.aggregation_index
+    timeline_index = {
+        "_id": timelineId,
+        "startTime": startTime,
+        "endTime": endTime,
+        "tag": tag,
+        "granlarity": granularity,
+        "submissionWeight": submissionWeight,
+        "submissionScoreWeight": submissionScoreWeight,
+        "commentWeight": commentWeight,
+        "commentScoreWeight": commentScoreWeight
+    }
+
+    postSingleObjectToDatabase(collection, timeline_index)
+
+
 def runAggregator(startTime, endTime, tag, granularity=HOUR, submissionWeight=3, submissionScoreWeight=1, commentWeight=2, commentScoreWeight=1):
     """ Gets data from mongoDB, aggregates it, and posts the results back to mongodb. Returns an unique identifier for the timeseries.
     The aggregation values are calculated based on the provided weights.
@@ -140,6 +158,8 @@ def runAggregator(startTime, endTime, tag, granularity=HOUR, submissionWeight=3,
                                                   submissionScoreWeight=submissionScoreWeight, commentWeight=commentWeight, commentScoreWeight=commentScoreWeight)
     aggregationCollection = client.reddit_data.aggregation
     bulkPostToDatabase(aggregationCollection, aggregation)
+    postTimelineIndexToDatabase(client, aggregationId, startTime, endTime, tag, granularity,
+                                submissionWeight, submissionScoreWeight, commentWeight, commentScoreWeight)
 
     client.close()
     return aggregationId

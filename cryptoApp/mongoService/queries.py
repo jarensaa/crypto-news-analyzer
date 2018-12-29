@@ -54,3 +54,7 @@ def bulkPostUniqueToDatabase(collection, objects):
         return (len(requests))
     except BulkWriteError as error:
         return error.details['nInserted']
+
+
+def postSingleObjectToDatabase(collection, input_object):
+    collection.insert_one(input_object)

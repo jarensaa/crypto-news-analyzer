@@ -19,11 +19,14 @@ granularity = HOUR
 currency = BITCOIN
 tag = cryptocurrencies[currency]["tag"]
 
+
 # Scrape data from reddit
-for dayIndex in range(days):
-    intervalStart = startTime + dayIndex * DAY
-    intervalEnd = startTime + DAY + dayIndex * DAY
-    runScraper(currency, intervalStart, intervalEnd, 200, 2)
+
+if("--noscrape" not in sys.argv):
+    for dayIndex in range(days):
+        intervalStart = startTime + dayIndex * DAY
+        intervalEnd = startTime + DAY + dayIndex * DAY
+        runScraper(currency, intervalStart, intervalEnd, 200, 2)
 
 seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
                          submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)

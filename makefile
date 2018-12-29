@@ -12,6 +12,9 @@ media:
 media+plot:
 	python3 ./cryptoApp/social-media-runner.py --plot
 
+media-noscrape:
+	python3 ./cryptoApp/social-media-runner.py --noscrape
+
 plot:
 	python3 ./cryptoApp/timelinePlotter/plotter.py --plot
 
