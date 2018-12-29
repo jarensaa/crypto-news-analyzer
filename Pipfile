@@ -17,6 +17,8 @@ ruptures = "*"
 ratelimit = "*"
 tqdm = "*"
 praw = "*"
+statsmodels = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3"

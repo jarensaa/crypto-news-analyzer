@@ -35,7 +35,7 @@ def configure_db():
         name = os.environ.get('MONGOUSER')
         client = pymongo.MongoClient("mongodb+srv://{}:{}@cluster-kaw-loi4k.mongodb.net/test?retryWrites=true"\
             .format(pw,name))
-        print("Connected successfully.") 
+        print("Connected successfully to MongoDB.") 
     
     except:   
         print("Could not connect to MongoDB") 
@@ -113,6 +113,3 @@ def parse_time_frame(ts_from, ts_to, timeformat="%d.%m.%Y"):
 
     return timestamps
 
-# show example call 
-# scrape_data(['BTC','ETH'],"9.12.2016","10.12.2018")
-c = configure_db()
