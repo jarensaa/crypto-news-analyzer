@@ -15,3 +15,8 @@ media+plot:
 plot:
 	python3 ./cryptoApp/timelinePlotter/plotter.py --plot
 
+mathie1:
+	python3 ./cryptoApp/utilityRunners/bitcoin1.py
+
+mathie1-scrape:
+	python3 ./cryptoApp/utilityRunners/bitcoin1.py --scrape
