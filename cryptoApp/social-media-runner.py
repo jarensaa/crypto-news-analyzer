@@ -14,14 +14,14 @@ import sys
 
 # YYYY MM DD HH MM SS
 days = 10
-startTime = int(mktime(datetime(2017, 10, 21, 0, 00, 00).timetuple()))
+startTime = int(mktime(datetime(2017, 11, 1, 0, 00, 00).timetuple()))
 endTime = startTime + days * DAY
 granularity = HOUR
 currency = BITCOIN
 tag = cryptocurrencies[currency]["tag"]
 
-peakDetectionWindowSize = 12
-peakDetectionSensitivity = 3
+peakDetectionWindowSize = 10
+peakDetectionSensitivity = 2
 
 # Scrape data from reddit
 

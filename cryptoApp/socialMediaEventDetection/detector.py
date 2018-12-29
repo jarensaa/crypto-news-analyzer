@@ -53,6 +53,10 @@ def findEvents(aggregatedData, k, sensitivity):
     aggregatedData = sorted(aggregatedData, key=lambda k: k["startTime"])
     scores = []
     events = []
+
+    if(len(aggregatedData) <= 2*k):
+        return []
+
     for i in range(len(aggregatedData)):
         score = getS1score(k, i, aggregatedData)
         if(score):
@@ -63,9 +67,21 @@ def findEvents(aggregatedData, k, sensitivity):
 
     (mean, std) = getMeanAndStd(scores)
 
-    for score in scores:
-        if(score["score"] - mean > sensitivity * std):
+    prevscore = 0
+    prevIndex = 0
+    for i in range(len(scores)):
+        score = scores[i]
+        if((score["score"] - mean) > (sensitivity * std) and score["score"] > 0):
+            if(i - prevIndex < k):
+                print(prevscore)
+                print(score)
+                if(prevscore > score["score"]):
+                    continue
+                events = events[:-1]
+
             events.append(score["time"])
+            prevscore = score["score"]
+            prevIndex = i
 
     return events
 

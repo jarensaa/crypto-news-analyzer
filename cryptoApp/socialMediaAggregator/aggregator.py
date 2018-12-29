@@ -77,8 +77,13 @@ def getAggregation(mongoClient, startTime, endTime, tag, granularity=HOUR, submi
 
     aggregations = []
     aggregationId = str(uuid.uuid1())
+    slots = int((endTime - startTime) / granularity)
+    currentSlot = 1
 
     while(startTime < endTime):
+        if(currentSlot % 10 == 0):
+            print("Aggregating slot {} of {}".format(currentSlot, slots))
+        currentSlot += 1
         queryFromTime = startTime
         queryToTime = startTime + granularity
 
