@@ -10,7 +10,7 @@ import pymongo
 import sys
 
 # YYYY MM DD HH MM SS
-startTime = int(mktime(datetime(2017, 10, 1, 12, 00, 00).timetuple()))
+startTime = int(mktime(datetime(2017, 10, 1, 00, 00, 00).timetuple()))
 endTime = int(mktime(datetime(2017, 10, 1, 23, 59, 59).timetuple()))
 currency = BITCOIN
 tag = cryptocurrencies[currency]["tag"]
