@@ -1,6 +1,7 @@
 from cryptoApp.mongoService.setup import getMongoClient, validateMongoEnvironment
 from cryptoApp.mongoService.queries import queryDatabase
 from cryptoApp.mongoService.queries import bulkPostToDatabase
+from pprint import pprint
 import math
 
 
@@ -13,37 +14,81 @@ def getTimeline(timelineId, client):
     return queryDatabase(collection, query)
 
 
-def findEvents(aggregatedData):
-    minTime = math.inf
-    maxTime = 0
-    for dataPoint in aggregatedData:
-        minTime = min(minTime, dataPoint["startTime"])
-        maxTime = max(maxTime, dataPoint["endTime"])
+def getS1score(k, i, inputArray):
+    if(i - k < 0):
+        return None
+    if(i + k >= len(inputArray)):
+        return None
 
-    middle = int((minTime + maxTime) / 2)
-    lastQuarter = int((middle+maxTime)/2)
-    return [middle, lastQuarter]
+    x = inputArray[i]["sum"]
+    leftMax = -math.inf
+    rightMax = -math.inf
+
+    for leftIndex in range(i-k, i):
+        leftMax = max(leftMax, x - inputArray[leftIndex]["sum"])
+
+    for rightIndex in range(i+1, i+k+1):
+        rightMax = max(rightMax, x - inputArray[rightIndex]["sum"])
+
+    return (leftMax + rightMax)/2
 
 
-def postEventsToDatabase(client, timelineId, events):
+def getMeanAndStd(scoreData):
+    meanSum = 0
+    ssum = 0
+
+    for score in scoreData:
+        meanSum += score["score"]
+
+    mean = meanSum / len(scoreData)
+    for score in scoreData:
+        ssum += math.pow(score["score"] - mean, 2)
+
+    std = math.sqrt(ssum / (len(scoreData)-1))
+
+    return (mean, std)
+
+
+def findEvents(aggregatedData, k, sensitivity):
+    aggregatedData = sorted(aggregatedData, key=lambda k: k["startTime"])
+    scores = []
+    events = []
+    for i in range(len(aggregatedData)):
+        score = getS1score(k, i, aggregatedData)
+        if(score):
+            scores.append({
+                "score": score,
+                "time": aggregatedData[i]["endTime"]
+            })
+
+    (mean, std) = getMeanAndStd(scores)
+
+    for score in scores:
+        if(score["score"] - mean > sensitivity * std):
+            events.append(score["time"])
+
+    return events
+
+
+def postEventsToDatabase(client, timelineId, events, windowSize, sensitivity):
     collection = client.reddit_data.timeline_events
     objects = []
+    timelineMetadata = client.reddit_data.aggregation_index.find_one({"_id": timelineId})
     for event in events:
         objects.append({
             "seriesId": timelineId,
-            "time": event
+            "time": event,
+            "windowSize": windowSize,
+            "sensitivity": sensitivity,
+            "tag": timelineMetadata["tag"]
         })
     bulkPostToDatabase(collection, objects)
 
 
-def runEventDetector(timelineId):
+def runEventDetector(timelineId, peakWindowSize, sensitivity):
     validateMongoEnvironment()
     client = getMongoClient()
     timeline = getTimeline(timelineId, client)
-    events = findEvents(timeline)
-    postEventsToDatabase(client, timelineId, events)
+    events = findEvents(timeline, peakWindowSize, sensitivity)
+    postEventsToDatabase(client, timelineId, events, peakWindowSize, sensitivity)
     client.close()
-
-
-timelineId = "4522b66a-0b86-11e9-ad04-c49ded20dae1"
-runEventDetector(timelineId)
