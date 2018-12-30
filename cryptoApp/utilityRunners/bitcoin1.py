@@ -34,7 +34,6 @@ results = queryDatabase(collection, query)
 
 # Sort on score:
 results = sorted(results, key=lambda k: k["score"], reverse=True)
-for i in range(5):
-    pprint(results[i])
+pprint(results)
 
 client.close()
