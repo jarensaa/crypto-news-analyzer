@@ -18,6 +18,9 @@ media-noscrape:
 media-noscrape-plot:
 	python3 ./cryptoApp/social-media-runner.py --noscrape --plot
 
+corr:
+	python3 ./cryptoApp/correlation-explorer.py
+
 plot:
 	python3 ./cryptoApp/timelinePlotter/plotter.py --plot
 
