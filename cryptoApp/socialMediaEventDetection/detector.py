@@ -73,8 +73,6 @@ def findEvents(aggregatedData, k, sensitivity):
         score = scores[i]
         if((score["score"] - mean) > (sensitivity * std) and score["score"] > 0):
             if(i - prevIndex < k):
-                print(prevscore)
-                print(score)
                 if(prevscore > score["score"]):
                     continue
                 events = events[:-1]

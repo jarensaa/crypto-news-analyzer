@@ -135,7 +135,8 @@ def storeSubmissionsInMongoDB(submissions):
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.submissions
     inserted = bulkPostUniqueToDatabase(collection, submissions)
-    print("Posted {:d} new submissions to MongoDB".format(inserted))
+    if(inserted != None):
+        print("Posted {:d} new submissions to MongoDB".format(inserted))
     mongoClient.close()
 
 
@@ -143,7 +144,8 @@ def storeCommentsInMongoDB(comments):
     mongoClient = getMongoClient()
     collection = mongoClient.reddit_data.comments
     inserted = bulkPostUniqueToDatabase(collection, comments)
-    print("Posted {:d} new comments to MongoDB".format(inserted))
+    if(inserted != None):
+        print("Posted {:d} new comments to MongoDB".format(inserted))
     mongoClient.close()
 
 
