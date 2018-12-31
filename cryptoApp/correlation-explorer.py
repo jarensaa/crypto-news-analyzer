@@ -13,6 +13,7 @@ from cryptoApp.socialMediaEventDetection.detector import runEventDetector
 from numpy import correlate
 from time import mktime
 from datetime import datetime
+from pprint import pprint
 import sys
 import bisect
 import random
@@ -76,12 +77,12 @@ def hasValueInRange(numberArray, rangeStart, rangeEnd):
     return False
 
 
-def analyseEvents(changepoints, mediaEvents, backDelay, frameSize):
+def analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits):
 
     mediaGivenChangepointCount = 0
     notMediaGivenChangepointCount = 0
-    mediaGivenRandomCount = 0
-    netMediaGivenRandomCount = 0
+    changepointGivenMediaCount = 0
+    notChangepointGivenMediaCount = 0
 
     for changepoint in changepoints:
         if(hasValueInRange(mediaEvents, changepoint-backDelay-frameSize, changepoint-backDelay)):
@@ -89,10 +90,44 @@ def analyseEvents(changepoints, mediaEvents, backDelay, frameSize):
         else:
             notMediaGivenChangepointCount += 1
 
-    return (mediaGivenChangepointCount/len(changepoints), notMediaGivenChangepointCount/len(changepoints))
+    for mediaEvent in mediaEvents:
+        if(hasValueInRange(changepoints, mediaEvent+backDelay, mediaEvent+backDelay+frameSize)):
+            changepointGivenMediaCount += 1
+        else:
+            notChangepointGivenMediaCount += 1
+
+    result = [mediaGivenChangepointCount/len(changepoints), notMediaGivenChangepointCount/len(changepoints),
+              changepointGivenMediaCount/len(mediaEvents), notChangepointGivenMediaCount/len(mediaEvents)]
+
+    return [round(x, roundDigits) for x in result]
 
 
-def getRandomChangepoints(number, minTime, maxTime):
+def analyseRandomData(changepoints, mediaEvents, trails, backDelay, frameSize, roundDigits):
+
+    randomMediaSum = [0, 0, 0, 0]
+    randomChangeSum = [0, 0, 0, 0]
+    randomAllSum = [0, 0, 0, 0]
+
+    for i in range(trails):
+        randomChangepoints = getRandomNumbers(len(changepoints), startTime, endTime)
+        randomMediaEvents = getRandomNumbers(len(mediaEvents), startTime, endTime)
+
+        randomMediaResult = analyseEvents(changepoints, randomMediaEvents, backDelay, frameSize, roundDigits)
+        randomChangeResult = analyseEvents(randomChangepoints, mediaEvents, backDelay, frameSize, roundDigits)
+        randomAllResults = analyseEvents(randomChangepoints, randomMediaEvents, backDelay, frameSize, roundDigits)
+
+        randomMediaSum = [sum(pair) for pair in zip(randomMediaSum, randomMediaResult)]
+        randomChangeSum = [sum(pair) for pair in zip(randomChangeResult, randomChangeSum)]
+        randomAllSum = [sum(pair) for pair in zip(randomAllResults, randomAllSum)]
+
+    randomMediaSum = [round(x/trails, roundDigits) for x in randomMediaSum]
+    randomChangeSum = [round(x/trails, roundDigits) for x in randomChangeSum]
+    randomAllSum = [round(x/trails, roundDigits) for x in randomAllSum]
+
+    return [randomMediaSum, randomChangeSum, randomAllSum]
+
+
+def getRandomNumbers(number, minTime, maxTime):
     numbers = []
     for i in range(number):
         numbers.append(random.randint(minTime, maxTime))
@@ -108,8 +143,12 @@ tag = cryptocurrencies[currency]["tag"]
 peakDetectionWindowSize = 10
 peakDetectionSensitivity = 1.5
 
-frameSize = 4*HOUR
-backDelay = 2*HOUR
+frameSize = 2*HOUR
+backDelay = 0*HOUR
+
+roundDigits = 5
+
+randomTrails = 1000
 
 validateMongoEnvironment()
 client = getMongoClient()
@@ -136,7 +175,11 @@ else:
     castChangepointValuesToNumbers(client)
     mediaEvents = sorted([x["time"] for x in getMediaEvents(client, series["_id"])])
     changepoints = sorted(list(set([x["changepoint"] for x in getChangepoints(client, startTime, endTime, currency)])))
-    print(analyseEvents(changepoints, mediaEvents, backDelay, frameSize))
-    print(analyseEvents(getRandomChangepoints(len(changepoints)*10, startTime, endTime), mediaEvents, backDelay, frameSize))
+    print("p(media|change)  , p(change|media) ")
+    print("{} <- Results on actual data".format(analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits)))
+    randomResults = analyseRandomData(changepoints, mediaEvents, randomTrails, backDelay, frameSize, roundDigits)
+    print("{} <- Random values for media events. {} trails".format(randomResults[0], randomTrails))
+    print("{} <- Random values for changepoints. {} trails".format(randomResults[1], randomTrails))
+    print("{} <- Random values for media events and changepoints. {} trails".format(randomResults[2], randomTrails))
 
 client.close()
