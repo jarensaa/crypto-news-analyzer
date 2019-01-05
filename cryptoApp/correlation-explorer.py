@@ -29,10 +29,14 @@ def getSeriesId(client, startTime, endTime):
     return collection.find_one(query)
 
 
-def getMediaEvents(client, seriesId):
+def getMediaEvents(client, seriesId, startTime, endTime):
     collection = client.reddit_data.timeline_events
     query = {
-        "seriesId": seriesId
+        "seriesId": seriesId,
+        "time": {
+            "$gte": startTime,
+            "$lte": endTime
+        }
     }
 
     return queryDatabase(collection, query)
@@ -65,7 +69,7 @@ def getChangepoints(client, startTime, endTime, currency):
     return queryDatabase(collection, query)
 
 
-def hasValueInRange(numberArray, rangeStart, rangeEnd):
+def hasValueInRange(numberArray, rangeStart, rangeEnd, debug=False):
     i = bisect.bisect_right(numberArray, rangeEnd)
     if(i == 0):
         return False
@@ -77,7 +81,7 @@ def hasValueInRange(numberArray, rangeStart, rangeEnd):
     return False
 
 
-def analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits):
+def analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits, debug=False):
 
     mediaGivenChangepointCount = 0
     notMediaGivenChangepointCount = 0
@@ -85,7 +89,7 @@ def analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits):
     notChangepointGivenMediaCount = 0
 
     for changepoint in changepoints:
-        if(hasValueInRange(mediaEvents, changepoint-backDelay-frameSize, changepoint-backDelay)):
+        if(hasValueInRange(mediaEvents, changepoint-backDelay-frameSize, changepoint-backDelay, debug)):
             mediaGivenChangepointCount += 1
         else:
             notMediaGivenChangepointCount += 1
@@ -102,16 +106,16 @@ def analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits):
     return [round(x, roundDigits) for x in result]
 
 
-def analyseRandomData(changepoints, mediaEvents, trails, backDelay, frameSize, roundDigits):
+def analyseRandomData(changepoints, mediaEvents, trails, backDelay, frameSize, pruningSize, roundGranularity, roundDigits):
 
     randomMediaSum = [0, 0, 0, 0]
     randomChangeSum = [0, 0, 0, 0]
     randomAllSum = [0, 0, 0, 0]
+    results = []
 
     for i in range(trails):
-        randomChangepoints = getRandomNumbers(len(changepoints), startTime, endTime)
-        randomMediaEvents = getRandomNumbers(len(mediaEvents), startTime, endTime)
-
+        randomChangepoints = getRandomNumbers(len(changepoints), startTime, endTime, roundGranularity)
+        randomMediaEvents = getRandomNumbers(len(mediaEvents), startTime, endTime, roundGranularity, pruningSize)
         randomMediaResult = analyseEvents(changepoints, randomMediaEvents, backDelay, frameSize, roundDigits)
         randomChangeResult = analyseEvents(randomChangepoints, mediaEvents, backDelay, frameSize, roundDigits)
         randomAllResults = analyseEvents(randomChangepoints, randomMediaEvents, backDelay, frameSize, roundDigits)
@@ -119,22 +123,44 @@ def analyseRandomData(changepoints, mediaEvents, trails, backDelay, frameSize, r
         randomMediaSum = [sum(pair) for pair in zip(randomMediaSum, randomMediaResult)]
         randomChangeSum = [sum(pair) for pair in zip(randomChangeResult, randomChangeSum)]
         randomAllSum = [sum(pair) for pair in zip(randomAllResults, randomAllSum)]
+        results.append(randomAllResults[2])
 
     randomMediaSum = [round(x/trails, roundDigits) for x in randomMediaSum]
     randomChangeSum = [round(x/trails, roundDigits) for x in randomChangeSum]
     randomAllSum = [round(x/trails, roundDigits) for x in randomAllSum]
 
-    return [randomMediaSum, randomChangeSum, randomAllSum]
+    return [randomMediaSum, randomChangeSum, randomAllSum, results]
 
 
-def getRandomNumbers(number, minTime, maxTime):
-    numbers = []
-    for i in range(number):
-        numbers.append(random.randint(minTime, maxTime))
-    return sorted(numbers)
+def getRandomNumbers(count, minTime, maxTime, roundGranularity, pruningSize=0):
+    numbers = set()
+
+    while(len(numbers) < count):
+        while(len(numbers) < count):
+            randomNumber = int(random.randint(minTime, maxTime)/roundGranularity)*roundGranularity
+            if(randomNumber > minTime and randomNumber < maxTime):
+                numbers.add(randomNumber)
+
+        prev = 0
+        newNumbers = set()
+        for number in sorted(numbers):
+            if(number - prev > pruningSize):
+                newNumbers.add(number)
+                prev = number
+        numbers = newNumbers
+
+    return sorted(list(numbers))
 
 
-days = 70
+def getTopMean(array, topPercent, roundDigits):
+    i = int(len(array)*topPercent)
+    sortedArray = sorted(array, reverse=True)
+    topMean = sum(sortedArray[i] for i in range(i))
+
+    return round(topMean/i, roundDigits)
+
+
+days = 100
 startTime = int(mktime(datetime(2017, 9, 1, 0, 00, 00).timetuple()))
 endTime = startTime + days * DAY
 currency = BITCOIN
@@ -145,41 +171,48 @@ peakDetectionSensitivity = 1.5
 
 frameSize = 2*HOUR
 backDelay = 0*HOUR
+eventDetectionFrame = 7*DAY
 
 roundDigits = 5
 
-randomTrails = 1000
+randomTrails = 10000
 
 validateMongoEnvironment()
 client = getMongoClient()
 
 series = getSeriesId(client, startTime, endTime)
+if(series == None):
+    seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
+                             submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)
+else:
+    seriesId = series["_id"]
+
+
+if("--no" not in sys.argv):
+    for interval in range(int((endTime - startTime)/(eventDetectionFrame))):
+        intervalStart = startTime + interval*eventDetectionFrame - 5*HOUR
+        intervalEnd = startTime + (interval+1)*eventDetectionFrame + 5*HOUR
+        runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity, intervalStart, intervalEnd)
 
 
 if("--plot" in sys.argv):
-    if(series == None):
-        seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
-                                 submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)
-    else:
-        seriesId = series["_id"]
     buildCryptoChangepointEvents(startTime, endTime, currency)
-    runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity)
     buildSocialMediaSeries(seriesId)
     buildCryptoDataSeries(startTime, endTime, currency)
     plot()
 else:
-    if(series == None):
-        client.close()
-        print("No social media timeseries fond for start and end-time combination")
-        exit()
     castChangepointValuesToNumbers(client)
-    mediaEvents = sorted([x["time"] for x in getMediaEvents(client, series["_id"])])
+    mediaEvents = sorted([x["time"] for x in getMediaEvents(client, series["_id"], startTime, endTime)])
     changepoints = sorted(list(set([x["changepoint"] for x in getChangepoints(client, startTime, endTime, currency)])))
-    print("p(media|change)  , p(change|media) ")
-    print("{} <- Results on actual data".format(analyseEvents(changepoints, mediaEvents, backDelay, frameSize, roundDigits)))
-    randomResults = analyseRandomData(changepoints, mediaEvents, randomTrails, backDelay, frameSize, roundDigits)
-    print("{} <- Random values for media events. {} trails".format(randomResults[0], randomTrails))
-    print("{} <- Random values for changepoints. {} trails".format(randomResults[1], randomTrails))
-    print("{} <- Random values for media events and changepoints. {} trails".format(randomResults[2], randomTrails))
-
+    for i in range(0, 25):
+        print("\n"+str(i))
+        print("p(media|change)  , p(change|media) ")
+        print("{} <- Results on actual data".format(analyseEvents(changepoints, mediaEvents, 0, i*HOUR, roundDigits)))
+        randomResults = analyseRandomData(changepoints, mediaEvents, randomTrails,
+                                          0, i*HOUR, peakDetectionWindowSize*HOUR, HOUR, roundDigits)
+        print("{} <- Random values for media events. {} trails".format(randomResults[0], randomTrails))
+        print("{} <- Random values for changepoints. {} trails".format(randomResults[1], randomTrails))
+        print("{} <- Random values for media events and changepoints. {} trails".format(randomResults[2], randomTrails))
+        print(getTopMean(randomResults[3], 0.05, roundDigits))
+        print(len(mediaEvents), len(changepoints))
 client.close()

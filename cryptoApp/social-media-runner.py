@@ -13,8 +13,8 @@ from datetime import datetime
 import sys
 
 # YYYY MM DD HH MM SS
-days = 200
-startTime = int(mktime(datetime(2017, 11, 10, 0, 00, 00).timetuple()))
+days = 5
+startTime = int(mktime(datetime(2017, 10, 12, 0, 00, 00).timetuple()))
 endTime = startTime + days * DAY
 granularity = HOUR
 currency = BITCOIN
@@ -36,8 +36,9 @@ if("--noscrape" not in sys.argv):
 seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
                          submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)
 
-runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity)
-buildSocialMediaSeries(seriesId)
+print(seriesId)
+#runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity)
+# buildSocialMediaSeries(seriesId)
 
 if("--plot" in sys.argv):
     buildCryptoDataSeries(startTime, endTime, currency)
