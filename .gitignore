@@ -58,5 +58,5 @@ __pycache__/
 .cache-main
 .scala_dependencies
 .worksheet
-
+.env
 
