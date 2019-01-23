@@ -62,3 +62,30 @@ def buildCryptoDataSeries(fromTime, toTime, currency):
 
     client.close()
     return
+
+
+def buildCryptoChangepointEvents(fromTime, toTime, currency):
+    validateMongoEnvironment()
+    client = getMongoClient()
+    collection = client.cryptoposts.changepoints
+    query = {
+        "coin": currency,
+        "changepoint": {
+            "$gte": fromTime,
+            "$lte": toTime
+        }
+    }
+
+    returnedData = queryDatabase(collection, query)
+    changepointset = set()
+    fileredData = []
+    for data in returnedData:
+        data["_id"] = "null"
+        if(data["changepoint"] not in changepointset):
+            changepointset.add(data["changepoint"])
+            fileredData.append(data)
+
+    with open('cryptoApp/timelinePlotter/static/cryptoChangepoints.json', 'w+') as outputFile:
+        json.dump(fileredData, outputFile)
+
+    client.close()

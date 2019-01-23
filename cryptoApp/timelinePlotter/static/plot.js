@@ -1,9 +1,9 @@
-function getChangepointPlot(changePoints, maxTime, minTime, xScale, colors) {
+function getMediaEventPlot(mediaEvents, maxTime, minTime, xScale, colors) {
   bands = [];
-  for (index in changePoints) {
-    if (index == changePoints.length - 1) {
+  for (index in mediaEvents) {
+    if (index == mediaEvents.length - 1) {
       bands.push({
-        low: changePoints[index].time * 1000,
+        low: mediaEvents[index].time * 1000,
         high: maxTime + 10000000,
         color: colors[index % 2]
       });
@@ -13,14 +13,14 @@ function getChangepointPlot(changePoints, maxTime, minTime, xScale, colors) {
     if (index == 0) {
       bands.push({
         low: minTime - 10000000,
-        high: changePoints[index].time * 1000,
+        high: mediaEvents[index].time * 1000,
         color: colors[(index + 1) % 2]
       });
     }
 
     bands.push({
-      low: changePoints[index].time * 1000,
-      high: changePoints[parseInt(index) + 1].time * 1000,
+      low: mediaEvents[index].time * 1000,
+      high: mediaEvents[parseInt(index) + 1].time * 1000,
       color: colors[index % 2]
     });
   }
@@ -42,6 +42,40 @@ function getChangepointPlot(changePoints, maxTime, minTime, xScale, colors) {
     .addDataset(new Plottable.Dataset(bands));
 
   return bandPlot;
+}
+
+function getChangepointPlot(changepoints, xScale) {
+  lines = [];
+  changepoints = changepoints.sort((a, b) => a.changepoint - b.changepoint);
+
+  for (index in changepoints) {
+    point = changepoints[index].changepoint;
+    lines.push({
+      low: point * 1000,
+      high: point * 1000 + 2000000,
+      color: "#3E9651"
+    });
+  }
+
+  console.log(lines);
+
+  var lineplot = new Plottable.Plots.Rectangle()
+    .y(0)
+    .y2(function() {
+      return lineplot.height();
+    })
+    .x(function(d) {
+      return d.low;
+    }, xScale)
+    .x2(function(d) {
+      return d.high;
+    })
+    .attr("fill", function(d) {
+      return d.color;
+    })
+    .addDataset(new Plottable.Dataset(lines));
+
+  return lineplot;
 }
 
 function plotAttribute(input) {
@@ -137,9 +171,15 @@ function plotAttribute(input) {
 
       plots = [plot, cryptoPlot];
 
-      if (input.changePoints.length > 0) {
+      if (input.changepoints.length > 0) {
+        changepointplot = [getChangepointPlot(input.changepoints, xScale)];
+
+        plots = changepointplot.concat(plots);
+      }
+
+      if (input.mediaEvents.length > 0) {
         plot = [
-          getChangepointPlot(input.changePoints, maxTime, minTime, xScale, [
+          getMediaEventPlot(input.mediaEvents, maxTime, minTime, xScale, [
             "#ffffff",
             "#f0f0f0"
           ])
@@ -163,17 +203,26 @@ var input = {
   filepath: "timeline.json",
   outputSvg: "plot",
   crypto: "crypto.json",
-  changePointFile: "media_events.json"
+  mediaEventFile: "media_events.json",
+  changepointFile: "cryptoChangepoints.json"
 };
 
-d3.json(input.changePointFile, function(error3, changePoints) {
-  changePointList = [];
+d3.json(input.mediaEventFile, function(error3, mediaEvents) {
+  d3.json(input.changepointFile, function(error4, changepoints) {
+    mediaEventList = [];
+    changePointList = [];
 
-  if (changePoints != null) {
-    changePointList = changePoints;
-  }
+    if (mediaEvents != null) {
+      mediaEventList = mediaEvents;
+    }
 
-  input.changePoints = changePointList;
+    if (changepoints != null) {
+      changePointList = changepoints;
+    }
 
-  plotAttribute(input);
+    input.mediaEvents = mediaEventList;
+    input.changepoints = changePointList;
+
+    plotAttribute(input);
+  });
 });

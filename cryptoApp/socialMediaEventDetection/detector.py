@@ -5,10 +5,16 @@ from pprint import pprint
 import math
 
 
-def getTimeline(timelineId, client):
+def getTimeline(timelineId, client, startTime, endTime):
     collection = client.reddit_data.aggregation
     query = {
-        "seriesId": timelineId
+        "seriesId": timelineId,
+        "startTime": {
+            "$gte": startTime
+        },
+        "endTime": {
+            "$lte": endTime
+        }
     }
 
     return queryDatabase(collection, query)
@@ -73,8 +79,6 @@ def findEvents(aggregatedData, k, sensitivity):
         score = scores[i]
         if((score["score"] - mean) > (sensitivity * std) and score["score"] > 0):
             if(i - prevIndex < k):
-                print(prevscore)
-                print(score)
                 if(prevscore > score["score"]):
                     continue
                 events = events[:-1]
@@ -101,10 +105,10 @@ def postEventsToDatabase(client, timelineId, events, windowSize, sensitivity):
     bulkPostToDatabase(collection, objects)
 
 
-def runEventDetector(timelineId, peakWindowSize, sensitivity):
+def runEventDetector(timelineId, peakWindowSize, sensitivity, startTime, endTime):
     validateMongoEnvironment()
     client = getMongoClient()
-    timeline = getTimeline(timelineId, client)
+    timeline = getTimeline(timelineId, client, startTime, endTime)
     events = findEvents(timeline, peakWindowSize, sensitivity)
     postEventsToDatabase(client, timelineId, events, peakWindowSize, sensitivity)
     client.close()
