@@ -13,14 +13,14 @@ from datetime import datetime
 import sys
 
 # YYYY MM DD HH MM SS
-days = 5
-startTime = int(mktime(datetime(2017, 10, 12, 0, 00, 00).timetuple()))
+days = 10
+startTime = int(mktime(datetime(2018, 11, 1, 0, 00, 00).timetuple()))
 endTime = startTime + days * DAY
 granularity = HOUR
 currency = BITCOIN
 tag = cryptocurrencies[currency]["tag"]
 
-peakDetectionWindowSize = 10
+peakDetectionWindowSize = 8
 peakDetectionSensitivity = 2
 
 # Scrape data from reddit
@@ -36,10 +36,9 @@ if("--noscrape" not in sys.argv):
 seriesId = runAggregator(startTime, endTime, tag, submissionScoreWeight=1,
                          submissionWeight=10, commentWeight=5, commentScoreWeight=0.5)
 
-print(seriesId)
-#runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity)
-# buildSocialMediaSeries(seriesId)
+runEventDetector(seriesId, peakDetectionWindowSize, peakDetectionSensitivity, startTime, endTime)
 
 if("--plot" in sys.argv):
+    buildSocialMediaSeries(seriesId)
     buildCryptoDataSeries(startTime, endTime, currency)
     plot()
