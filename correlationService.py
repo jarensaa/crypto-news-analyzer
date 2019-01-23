@@ -1,18 +1,17 @@
 import pandas as pd 
 import datetime as dt
 import numpy as np
-import statsmodels
-import statsmodels.tsa.stattools as ts
-from statsmodels.tsa.stattools import acf, pacf
+from scipy import signal
+#from correlationPlotter import plot_correlation
 from cryptoApp.socialMediaAggregator.aggregator import runAggregator
 from cryptoApp.mongoService.queries import queryDatabase
 from cryptoApp.mongoService.setup import getMongoClient
 from cryptoApp.mongoService.setup import validateMongoEnvironment
-import matplotlib.pyplot as plt
 
 
 
-def generate_social_timeseries(start,end, coin):
+
+def generate_social_timeseries(fromTime, toTime, coin, sid=None):
     """ generates an aggregated social media time series within 
         a time frame for a specific coin
     :param start: unix timestamp, starting point
@@ -20,16 +19,21 @@ def generate_social_timeseries(start,end, coin):
     :param coin: coin string, eg. 'bitcoin'
 
     """
-    
-    s_id = runAggregator(start,end, coin)
+    if not sid:
+        sid = runAggregator(fromTime, toTime,coin)
     
     # example series id 
-    #s_id = '2e0859d0-0b81-11e9-b0f7-a0d37ae9eda5'
+    # s_id = '2e0859d0-0b81-11e9-b0f7-a0d37ae9eda5'
 
     validateMongoEnvironment()
     client = getMongoClient()
     query = {
-        "seriesId": s_id
+        "seriesId": sid,
+        "startTime": {
+            "$gte": fromTime,
+            "$lt": toTime
+        }
+        
     }
 
     collection = client.reddit_data.aggregation
@@ -81,6 +85,7 @@ def auto_correlate(x):
     # Normalize by the zero-lag value:
     autocorr_xdm /= autocorr_xdm[nx - 1]
     return autocorr_xdm, lags 
+
     
 
 def correlate_timeseries(crypto_timeseries, social_timeseries):
@@ -98,45 +103,19 @@ def correlate_timeseries(crypto_timeseries, social_timeseries):
     ccov = np.correlate(price - price.mean(), social - social.mean(), mode='full')
     ccor = ccov / (n * social.std() * social.std())
 
-    fig, axs = plt.subplots(nrows=2)
-    fig.subplots_adjust(hspace=0.4)
-    ax = axs[0]
-    ax.plot(x, price, 'b', label='price')
-    ax.plot(x, social, 'r', label='social media score')
-    ax.legend(loc='upper right', fontsize='small', ncol=2)
-
-    ax = axs[1]
-    ax.plot(lags, ccor)
-    ax.set_ylim(-1.1, 1.1)
-    ax.set_ylabel('cross-correlation')
-    ax.set_xlabel('lag of price in hours relative to social media activity')
-
-    maxlag = lags[np.argmax(ccor)]
-    print("max correlation is at lag %d" % maxlag)
-    plt.show()
-
-    return ccor
+    return price, social, x, lags, ccor
 
 
-def plot_autocorrelation(autocorr_xdm, lags):
-    fig, ax = plt.subplots()
-    ax.plot(lags, autocorr_xdm, 'r')
-    ax.set_xlabel('lag')
-    ax.set_ylabel('correlation coefficient')
-    ax.grid(True)
-    plt.show()
-
-
-def main():
+def compute_correlation_of_segments():
     crypto1 = generate_crypto_timeseries(1517529600, 1518220800, 'BTC')
     social = generate_social_timeseries(1512172800, 1512864000, 'bitcoin')
-    cor1 = correlate_timeseries(crypto1, social)
+    price, social, x, lags, ccor = correlate_timeseries(crypto1, social)
+    #plot_correlation(price, social, x, lags, ccor)
 
     # to compare against other random time series 
     #crypto2 = generate_crypto_timeseries(1512172800, 1512864000, 'BTC')
     #cor2 = correlate_timeseries(crypto2, social)
 
- 
 
 if __name__ == "__main__":
-    main()
+    compute_correlation_of_segments()

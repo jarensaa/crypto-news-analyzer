@@ -19,6 +19,7 @@ tqdm = "*"
 praw = "*"
 statsmodels = "*"
 matplotlib = "*"
+scipy = "*"
 
 [requires]
 python_version = "3"

@@ -4,8 +4,8 @@ import pandas as pd
 import datetime as dt
 import random
 import ruptures as rpt
-from cryptoApp.mongoService.setup import getMongoClient
-from cryptoApp.mongoService.queries import queryDatabase
+#from cryptoApp.mongoService.setup import getMongoClient
+#from cryptoApp.mongoService.queries import queryDatabase
 
 
 def query_database(coin):
@@ -69,6 +69,7 @@ def generate_whole_timeseries(coin):
 
 
 #t = generate_whole_timeseries('BTC')
+
 
 
 

@@ -19,7 +19,7 @@ def scan_for_change_points(coin, granularity=7, stride=3, dbgran=24):
     win = granularity * dbgran
     stride = stride * 24
     
-    for entry in range(0,len(timeseries['price']),stride):
+    for entry in range(0,len(timeseries['price']-win),stride):
         start = timeseries['time'].iloc[entry]
         end = timeseries['time'].iloc[win+entry]
         changepoints = get_change_point_dates(timeseries, 'price', start, end)
@@ -27,8 +27,7 @@ def scan_for_change_points(coin, granularity=7, stride=3, dbgran=24):
         start_unix = timeseries['unix_time'].iloc[entry]
         end_unix = timeseries['unix_time'].iloc[win+entry]
         store_changepoint(changepoints, start_unix, end_unix, coin)
-
-
+        
     return timeseries
 
 
