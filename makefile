@@ -33,4 +33,5 @@ mathie1:
 mathie1-scrape:
 	python3 ./cryptoApp/utilityRunners/bitcoin1.py --scrape
 
-
+delete:
+	python3 ./cryptoApp/deleter.py

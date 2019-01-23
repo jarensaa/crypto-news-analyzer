@@ -169,19 +169,19 @@ function plotAttribute(input) {
         "90"
       );
 
-      plots = [plot, cryptoPlot];
+      plots = [plot]; //, cryptoPlot];
 
       if (input.changepoints.length > 0) {
         changepointplot = [getChangepointPlot(input.changepoints, xScale)];
 
-        plots = changepointplot.concat(plots);
+        //plots = changepointplot.concat(plots);
       }
 
       if (input.mediaEvents.length > 0) {
         plot = [
           getMediaEventPlot(input.mediaEvents, maxTime, minTime, xScale, [
             "#ffffff",
-            "#f0f0f0"
+            "#c0c0c0"
           ])
         ];
         plots = plot.concat(plots);
